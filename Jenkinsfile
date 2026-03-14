@@ -67,14 +67,7 @@ pipeline {
             steps {
                 echo 'Running SonarQube analysis...'
                 withSonarQubeEnv('SonarQube') {
-                    stage('SonarQube Analysis') {
-                        steps {
-                            echo 'Running SonarQube analysis...'
-                            withSonarQubeEnv('SonarQube') {
-                                sh 'mvn sonar:sonar -Dsonar.projectKey=secure-ci-pipeline'
-                            }
-                        }
-                    }
+                    sh 'mvn sonar:sonar -Dsonar.projectKey=secure-ci-pipeline'
                 }
             }
         }
@@ -129,7 +122,7 @@ pipeline {
         stage('Package') {
             steps {
                 echo 'Packaging the application...'
-                sh 'mvn package'
+                sh 'mvn package -DskipTests'
             }
             post {
                 success {
