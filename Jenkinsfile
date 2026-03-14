@@ -27,17 +27,18 @@ pipeline {
                 stage('OWASP Scan') {
                     steps {
                         echo 'Running OWASP Dependency-Check...'
-                        withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
+
+                        withCredentials([string(credentialsId: 'NVD_API_KEY', variable: 'NVD_API_KEY')]) {
                             catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                                 sh '''
-                            mvn org.owasp:dependency-check-maven:purge || true
+                    mvn org.owasp:dependency-check-maven:purge || true
 
-                            mvn -B org.owasp:dependency-check-maven:check \
-                            -DnvdApiKey=$NVD_API_KEY \
-                            -DfailBuildOnCVSS=9 \
-                            -Dformats=HTML,XML \
-                            -DdataDirectory="$WORKSPACE/.dc-data"
-                        '''
+                    mvn -B org.owasp:dependency-check-maven:check \
+                    -DnvdApiKey=$NVD_API_KEY \
+                    -DfailBuildOnCVSS=9 \
+                    -Dformats=HTML,XML \
+                    -DdataDirectory="$WORKSPACE/.dc-data"
+                '''
                             }
                         }
 
