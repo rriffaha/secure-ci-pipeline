@@ -29,13 +29,24 @@ pipeline {
                         echo 'Running OWASP Dependency-Check...'
                         catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                             sh '''
+                                mvn org.owasp:dependency-check-maven:purge || true
+
                                 mvn -B org.owasp:dependency-check-maven:check \
                                 -DfailBuildOnCVSS=9 \
                                 -Dformats=HTML,XML \
                                 -DdataDirectory="$WORKSPACE/.dc-data"
                             '''
                         }
-                        stash name: 'dependency-check-reports', includes: 'target/dependency-check-report.xml,target/dependency-check-report.html'
+
+                        script {
+                            if (fileExists('target/dependency-check-report.xml') || fileExists('target/dependency-check-report.html')) {
+                                stash name: 'dependency-check-reports',
+                                        includes: 'target/dependency-check-report.xml,target/dependency-check-report.html',
+                                        allowEmpty: true
+                            } else {
+                                echo 'Dependency-Check reports were not generated, skipping stash.'
+                            }
+                        }
                     }
                 }
 
@@ -51,18 +62,35 @@ pipeline {
         stage('Publish Dependency-Check Results') {
             steps {
                 echo 'Publishing Dependency-Check reports...'
-                unstash 'dependency-check-reports'
 
-                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                script {
+                    try {
+                        unstash 'dependency-check-reports'
+                    } catch (err) {
+                        echo 'No stashed dependency-check reports found, skipping unstash.'
+                    }
+                }
 
-                publishHTML(target: [
-                        reportDir: 'target',
-                        reportFiles: 'dependency-check-report.html',
-                        reportName: 'Dependency-Check Report',
-                        keepAll: true,
-                        alwaysLinkToLastBuild: true,
-                        allowMissing: true
-                ])
+                script {
+                    if (fileExists('target/dependency-check-report.xml')) {
+                        dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                    } else {
+                        echo 'XML report not found, skipping dependencyCheckPublisher.'
+                    }
+
+                    if (fileExists('target/dependency-check-report.html')) {
+                        publishHTML(target: [
+                                reportDir: 'target',
+                                reportFiles: 'dependency-check-report.html',
+                                reportName: 'Dependency-Check Report',
+                                keepAll: true,
+                                alwaysLinkToLastBuild: true,
+                                allowMissing: true
+                        ])
+                    } else {
+                        echo 'HTML report not found, skipping HTML publish.'
+                    }
+                }
             }
         }
 
