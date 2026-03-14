@@ -27,15 +27,18 @@ pipeline {
                 stage('OWASP Scan') {
                     steps {
                         echo 'Running OWASP Dependency-Check...'
-                        catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-                            sh '''
-                                mvn org.owasp:dependency-check-maven:purge || true
+                        withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
+                            catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                                sh '''
+                            mvn org.owasp:dependency-check-maven:purge || true
 
-                                mvn -B org.owasp:dependency-check-maven:check \
-                                -DfailBuildOnCVSS=9 \
-                                -Dformats=HTML,XML \
-                                -DdataDirectory="$WORKSPACE/.dc-data"
-                            '''
+                            mvn -B org.owasp:dependency-check-maven:check \
+                            -DnvdApiKey=$NVD_API_KEY \
+                            -DfailBuildOnCVSS=9 \
+                            -Dformats=HTML,XML \
+                            -DdataDirectory="$WORKSPACE/.dc-data"
+                        '''
+                            }
                         }
 
                         script {
@@ -50,11 +53,29 @@ pipeline {
                     }
                 }
 
+
                 stage('Dependency Updates') {
                     steps {
                         echo 'Checking for dependency updates...'
                         sh 'mvn versions:display-dependency-updates'
                     }
+                }
+            }
+        }
+                stage('Dependency Updates') {
+                    steps {
+                        echo 'Checking for dependency updates...'
+                        sh 'mvn versions:display-dependency-updates'
+                    }
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                echo 'Running SonarQube analysis...'
+                withSonarQubeEnv('SonarQube') {
+                    sh 'mvn clean verify sonar:sonar -Dsonar.projectKey=secure-ci-pipeline'
                 }
             }
         }
