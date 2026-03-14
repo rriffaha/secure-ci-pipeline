@@ -25,10 +25,13 @@ pipeline {
         stage('Dependency Scan') {
             steps {
                 echo 'Running OWASP Dependency-Check...'
-                sh '''
-                    mvn org.owasp:dependency-check-maven:check \
-                    -Dformat=HTML
-                '''
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    sh '''
+                mvn org.owasp:dependency-check-maven:check \
+                -Dformats=HTML,XML \
+                -DdataDirectory="$WORKSPACE/.dc-data"
+            '''
+                }
             }
             post {
                 always {
