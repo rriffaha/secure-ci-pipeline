@@ -62,20 +62,19 @@ pipeline {
                 }
             }
         }
-                stage('Dependency Updates') {
-                    steps {
-                        echo 'Checking for dependency updates...'
-                        sh 'mvn versions:display-dependency-updates'
-                    }
-                }
-            }
-        }
 
         stage('SonarQube Analysis') {
             steps {
                 echo 'Running SonarQube analysis...'
                 withSonarQubeEnv('SonarQube') {
-                    sh 'mvn clean verify sonar:sonar -Dsonar.projectKey=secure-ci-pipeline'
+                    stage('SonarQube Analysis') {
+                        steps {
+                            echo 'Running SonarQube analysis...'
+                            withSonarQubeEnv('SonarQube') {
+                                sh 'mvn sonar:sonar -Dsonar.projectKey=secure-ci-pipeline'
+                            }
+                        }
+                    }
                 }
             }
         }
