@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    tools {
+        maven 'M3'
+        jdk 'JDK21'
+    }
+
     stages {
 
         stage('Checkout') {
