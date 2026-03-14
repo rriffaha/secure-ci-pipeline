@@ -3,7 +3,7 @@ pipeline {
 
     tools {
         maven 'M3'
-        jdk 'JDK21'
+        jdk 'JDK17'
     }
 
     stages {
@@ -22,29 +22,47 @@ pipeline {
             }
         }
 
-        stage('Dependency Scan') {
-            steps {
-                echo 'Running OWASP Dependency-Check...'
-                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-                    sh '''
-                mvn org.owasp:dependency-check-maven:check \
-                -Dformats=HTML,XML \
-                -DdataDirectory="$WORKSPACE/.dc-data"
-            '''
+        stage('Dependency Scanning') {
+            parallel {
+                stage('OWASP Scan') {
+                    steps {
+                        echo 'Running OWASP Dependency-Check...'
+                        catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                            sh '''
+                                mvn -B org.owasp:dependency-check-maven:check \
+                                -DfailBuildOnCVSS=9 \
+                                -Dformats=HTML,XML \
+                                -DdataDirectory="$WORKSPACE/.dc-data"
+                            '''
+                        }
+                        stash name: 'dependency-check-reports', includes: 'target/dependency-check-report.xml,target/dependency-check-report.html'
+                    }
+                }
+
+                stage('Dependency Updates') {
+                    steps {
+                        echo 'Checking for dependency updates...'
+                        sh 'mvn versions:display-dependency-updates'
+                    }
                 }
             }
-            post {
-                always {
-                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
-                    publishHTML(target: [
-                            reportDir: 'target',
-                            reportFiles: 'dependency-check-report.html',
-                            reportName: 'Dependency-Check Report',
-                            keepAll: true,
-                            alwaysLinkToLastBuild: true,
-                            allowMissing: true
-                    ])
-                }
+        }
+
+        stage('Publish Dependency-Check Results') {
+            steps {
+                echo 'Publishing Dependency-Check reports...'
+                unstash 'dependency-check-reports'
+
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+
+                publishHTML(target: [
+                        reportDir: 'target',
+                        reportFiles: 'dependency-check-report.html',
+                        reportName: 'Dependency-Check Report',
+                        keepAll: true,
+                        alwaysLinkToLastBuild: true,
+                        allowMissing: true
+                ])
             }
         }
 
