@@ -22,6 +22,29 @@ pipeline {
             }
         }
 
+        stage('Dependency Scan') {
+            steps {
+                echo 'Running OWASP Dependency-Check...'
+                sh '''
+                    mvn org.owasp:dependency-check-maven:check \
+                    -Dformat=HTML
+                '''
+            }
+            post {
+                always {
+                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                    publishHTML(target: [
+                            reportDir: 'target',
+                            reportFiles: 'dependency-check-report.html',
+                            reportName: 'Dependency-Check Report',
+                            keepAll: true,
+                            alwaysLinkToLastBuild: true,
+                            allowMissing: true
+                    ])
+                }
+            }
+        }
+
         stage('Test') {
             steps {
                 echo 'Running unit tests...'
