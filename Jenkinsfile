@@ -123,33 +123,21 @@ pipeline {
         stage('Code Coverage') {
             steps {
                 echo 'Generating JaCoCo coverage report...'
-                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-                    sh 'mvn jacoco:report'
-                }
-            }
-            post {
-                always {
-                    publishHTML(target: [
-                            reportDir: 'target/site/jacoco',
-                            reportFiles: 'index.html',
-                            reportName: 'Code Coverage HTML Report',
-                            keepAll: true,
-                            alwaysLinkToLastBuild: true,
-                            allowMissing: true
-                    ])
-                }
+                sh 'mvn test jacoco:report'
+                publishHTML(target: [
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'target/site/jacoco',
+                        reportFiles: 'index.html',
+                        reportName: 'Code Coverage HTML Report'
+                ])
             }
         }
 
         stage('Test') {
             steps {
-                echo 'Running unit tests...'
-                sh 'mvn test'
-            }
-            post {
-                always {
-                    junit 'target/surefire-reports/*.xml'
-                }
+                echo 'Tests already executed during Code Coverage stage'
             }
         }
 
