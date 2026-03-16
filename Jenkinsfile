@@ -66,9 +66,9 @@ pipeline {
 
         stage('Trivy File Scan') {
             steps {
-                bat '''
-        U:\\dev-tools\\trivy\\trivy.exe fs . > trivy-report.txt
-        type trivy-report.txt
+                sh '''
+        trivy fs . > trivy-report.txt
+        cat trivy-report.txt
         '''
             }
         }
