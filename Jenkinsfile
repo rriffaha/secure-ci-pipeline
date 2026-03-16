@@ -141,6 +141,18 @@ pipeline {
             }
         }
 
+        stage('Integration Tests') {
+            steps {
+                echo 'Running integration tests...'
+
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    sh 'mvn verify -Pintegration-tests'
+                }
+
+                junit 'target/failsafe-reports/*.xml'
+            }
+        }
+
         stage('Package') {
             steps {
                 echo 'Packaging the application...'
