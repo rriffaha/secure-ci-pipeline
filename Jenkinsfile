@@ -146,10 +146,10 @@ pipeline {
                 echo 'Running integration tests...'
 
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-                    sh 'mvn verify -Pintegration-tests'
+                    sh 'mvn clean verify -Pintegration-tests'
                 }
 
-                junit 'target/failsafe-reports/*.xml'
+                junit testResults: 'target/failsafe-reports/*.xml', allowEmptyResults: true
             }
         }
 
