@@ -64,6 +64,15 @@ pipeline {
             }
         }
 
+        stage('Trivy File Scan') {
+            steps {
+                bat '''
+        U:\\dev-tools\\trivy\\trivy.exe fs . > trivy-report.txt
+        type trivy-report.txt
+        '''
+            }
+        }
+
         stage('SonarQube Analysis') {
             steps {
                 echo 'Running SonarQube analysis...'
@@ -106,6 +115,29 @@ pipeline {
                     } else {
                         echo 'HTML report not found, skipping HTML publish.'
                     }
+                }
+            }
+        }
+
+
+
+        stage('Code Coverage') {
+            steps {
+                echo 'Generating JaCoCo coverage report...'
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    sh 'mvn jacoco:report'
+                }
+            }
+            post {
+                always {
+                    publishHTML(target: [
+                            reportDir: 'target/site/jacoco',
+                            reportFiles: 'index.html',
+                            reportName: 'Code Coverage HTML Report',
+                            keepAll: true,
+                            alwaysLinkToLastBuild: true,
+                            allowMissing: true
+                    ])
                 }
             }
         }
