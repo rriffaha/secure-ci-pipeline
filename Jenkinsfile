@@ -67,7 +67,11 @@ pipeline {
         stage('Trivy File Scan') {
             steps {
                 sh '''
-        trivy fs . > trivy-report.txt
+        mkdir -p .trivy-bin
+        if [ ! -f .trivy-bin/trivy ]; then
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b .trivy-bin
+        fi
+        ./.trivy-bin/trivy fs . > trivy-report.txt
         cat trivy-report.txt
         '''
             }
