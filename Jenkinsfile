@@ -31,14 +31,14 @@ pipeline {
                         withCredentials([string(credentialsId: 'NVD_API_KEY', variable: 'NVD_API_KEY')]) {
                             catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                                 sh '''
-                    mvn org.owasp:dependency-check-maven:purge || true
+                                    mvn org.owasp:dependency-check-maven:purge || true
 
-                    mvn -B org.owasp:dependency-check-maven:check \
-                    -DnvdApiKey=$NVD_API_KEY \
-                    -DfailBuildOnCVSS=9 \
-                    -Dformats=HTML,XML \
-                    -DdataDirectory="$WORKSPACE/.dc-data"
-                '''
+                                    mvn -B org.owasp:dependency-check-maven:check \
+                                    -DnvdApiKey=$NVD_API_KEY \
+                                    -DfailBuildOnCVSS=9 \
+                                    -Dformats=HTML,XML \
+                                    -DdataDirectory="$WORKSPACE/.dc-data"
+                                '''
                             }
                         }
 
@@ -54,7 +54,6 @@ pipeline {
                     }
                 }
 
-
                 stage('Dependency Updates') {
                     steps {
                         echo 'Checking for dependency updates...'
@@ -67,13 +66,13 @@ pipeline {
         stage('Trivy File Scan') {
             steps {
                 sh '''
-        mkdir -p .trivy-bin
-        if [ ! -f .trivy-bin/trivy ]; then
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b .trivy-bin
-        fi
-        ./.trivy-bin/trivy fs . > trivy-report.txt
-        cat trivy-report.txt
-        '''
+                    mkdir -p .trivy-bin
+                    if [ ! -f .trivy-bin/trivy ]; then
+                      curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b .trivy-bin
+                    fi
+                    ./.trivy-bin/trivy fs . > trivy-report.txt
+                    cat trivy-report.txt
+                '''
             }
         }
 
@@ -118,8 +117,6 @@ pipeline {
             }
         }
 
-
-
         stage('Code Coverage') {
             steps {
                 echo 'Generating JaCoCo coverage report...'
@@ -161,6 +158,27 @@ pipeline {
             post {
                 success {
                     archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                echo 'Building Docker image...'
+                sh 'docker build -t rriffaha/demo:${BUILD_NUMBER} .'
+                sh 'docker tag rriffaha/demo:${BUILD_NUMBER} rriffaha/demo:latest'
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                echo 'Pushing Docker image to DockerHub...'
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push rriffaha/demo:${BUILD_NUMBER}
+                        docker push rriffaha/demo:latest
+                    '''
                 }
             }
         }
