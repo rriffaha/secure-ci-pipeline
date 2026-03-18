@@ -179,7 +179,7 @@ pipeline {
                         docker push rriffaha/demo:${BUILD_NUMBER}
                         docker push rriffaha/demo:latest
                     '''
-                }
+                 }
             }
         }
     }
