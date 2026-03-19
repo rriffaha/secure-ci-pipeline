@@ -134,8 +134,8 @@ The dependency reports generated earlier are published in Jenkins.
 
 ### Two reports are published:
 
-• Dependency Check XML report
-• Dependency Check HTML report
+* Dependency Check XML report
+* Dependency Check HTML report
 
 These reports appear in the Jenkins job sidebar.
 
