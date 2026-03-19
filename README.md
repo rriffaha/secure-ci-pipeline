@@ -33,10 +33,8 @@ secure-ci-pipeline
 ```
 Developer Commit (cicd branch)
 │
-▼
 GitHub
 │
-▼
 Jenkins Pipeline
 │
 ├── Checkout
