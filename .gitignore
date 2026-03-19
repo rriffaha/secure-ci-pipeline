@@ -25,3 +25,11 @@ replay_pid*
 
 target/
 .idea/
+
+.terraform/
+terraform/.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+*/terraform.tfvars
+crash.logs

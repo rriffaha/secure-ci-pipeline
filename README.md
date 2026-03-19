@@ -348,7 +348,87 @@ Dependency scanning was slow due to large vulnerability databases. A local data 
 * Screenshots demonstrating pipeline execution
 
 ----
+## Docker Containerization
 
+The application was containerized using Docker to enable consistent deployment across environments.
+
+### Docker Build
+
+A Docker image was created using the following command:
+
+```
+docker build -t secure-ci-pipeline .
+```
+
+### Docker Push
+
+The image was pushed to DockerHub:
+```
+docker push <your-dockerhub-username>/secure-ci-pipeline
+```
+
+This allows the application to be deployed on remote infrastructure such as AWS EC2.
+
+### Purpose
+
+Docker ensures:
+- consistent runtime environment
+- portability across systems
+- simplified deployment process
+
+----
+## Infrastructure Provisioning (Terraform)
+
+Terraform was used to provision cloud infrastructure on AWS.
+
+### Resources Created
+
+- EC2 instance (`t3.micro`)
+- Security group with:
+  - SSH access (port 22)
+  - Application access (port 8080)
+
+### Commands Used
+```
+terraform init
+terraform plan
+terraform apply
+```
+### Result
+
+Terraform successfully created the infrastructure and returned:
+
+- Public IP: `13.59.213.22`
+- Public DNS: `ec2-13-59-213-22.us-east-2.compute.amazonaws.com`
+
+This demonstrates Infrastructure as Code (IaC) and automated cloud provisioning.
+
+----
+## Deployment Verification Attempt
+
+After provisioning the EC2 instance, a deployment verification attempt was performed.
+
+### Test Command
+```
+curl http://13.59.213.22:8080
+```
+### Result
+
+The request did not return a response, indicating that the application was not reachable on port 8080.
+
+### Analysis
+
+This suggests that while infrastructure provisioning succeeded, the application container likely did not remain active after startup on the EC2 instance.
+
+### Conclusion
+
+- Infrastructure provisioning using Terraform was successful
+- Deployment pipeline reached the cloud environment
+- Application runtime issue prevented successful endpoint response
+
+This still demonstrates a complete CI/CD pipeline flow including infrastructure provisioning and deployment attempt.
+
+----
 ## Screenshots Folder Structure
 ```
 Screenshots
